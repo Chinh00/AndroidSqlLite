@@ -58,32 +58,70 @@ class MainActivity : ComponentActivity() {
                 color = MaterialTheme.colorScheme.background
             ) {
                 MainScreen(onCreate = {
-                    val dbContext = DatabaseInstance.writableDatabase
-                    dbContext.beginTransaction()
-                    val contentValues = ContentValues().apply {
-                        put(com.superman.androidsqllite.database.DatabaseInstance.MA_LOP, it.maLop)
-                        put(com.superman.androidsqllite.database.DatabaseInstance.TEN_LOP, tenlop)
-                        put(com.superman.androidsqllite.database.DatabaseInstance.SI_SO, it.siSo)
+                    if (Validate(it)) {
+                        val dbContext = DatabaseInstance.writableDatabase
+                        dbContext.beginTransaction()
+                        val contentValues = ContentValues().apply {
+                            put(com.superman.androidsqllite.database.DatabaseInstance.MA_LOP, it.maLop)
+                            put(com.superman.androidsqllite.database.DatabaseInstance.TEN_LOP, tenlop)
+                            put(com.superman.androidsqllite.database.DatabaseInstance.SI_SO, it.siSo)
+                        }
+                        dbContext.insert(com.superman.androidsqllite.database.DatabaseInstance.TABLE_NAME, null, contentValues)
+                        dbContext.setTransactionSuccessful()
+                        Toast.makeText(this, "Thêm mới thành công", Toast.LENGTH_LONG).show()
+                        dbContext.endTransaction()
                     }
-                    dbContext.insert(com.superman.androidsqllite.database.DatabaseInstance.TABLE_NAME, null, contentValues)
-                    dbContext.setTransactionSuccessful()
-                    Toast.makeText(this, "Thêm mới thành công", Toast.LENGTH_LONG).show()
+                }, onUpdate = {
+                    if (Validate(it)) {
+                        val dbContext = DatabaseInstance.writableDatabase
+                        dbContext.beginTransaction()
+                        val contentValues = ContentValues().apply {
+                            put(com.superman.androidsqllite.database.DatabaseInstance.TEN_LOP, tenlop)
+                            put(com.superman.androidsqllite.database.DatabaseInstance.SI_SO, it.siSo)
+                        }
+                        dbContext.update(com.superman.androidsqllite.database.DatabaseInstance.TABLE_NAME, contentValues, "${com.superman.androidsqllite.database.DatabaseInstance.MA_LOP} = ?", arrayOf(it.maLop.toString()))
+                        dbContext.setTransactionSuccessful()
+                        Toast.makeText(this, "Cập nhật thành công", Toast.LENGTH_LONG).show()
+                        dbContext.endTransaction()
+                    }
 
+                }, onDelete = {
 
-
-                }, onUpdate = {}, onDelete = {}, onQuery = {})
+                    if (Validate(it)) {
+                        val dbContext = DatabaseInstance.writableDatabase
+                        dbContext.beginTransaction()
+                        val contentValues = ContentValues().apply {
+                            put(com.superman.androidsqllite.database.DatabaseInstance.TEN_LOP, tenlop)
+                            put(com.superman.androidsqllite.database.DatabaseInstance.SI_SO, it.siSo)
+                        }
+                        dbContext.update(com.superman.androidsqllite.database.DatabaseInstance.TABLE_NAME, contentValues, "${com.superman.androidsqllite.database.DatabaseInstance.MA_LOP} = ?", arrayOf(it.maLop.toString()))
+                        dbContext.setTransactionSuccessful()
+                        Toast.makeText(this, "Cập nhật thành công", Toast.LENGTH_LONG).show()
+                        dbContext.endTransaction()
+                    }
+                }, onQuery = {})
 
             }
         }
     }
-    fun Validate(lop: Lop) = {
+    fun Validate(lop: Lop): Boolean {
+        if (lop.maLop.isEmpty() || lop.tenLop.isEmpty() || lop.siSo.isEmpty()) {
+            Toast.makeText(this, "Nhập rỗng ", Toast.LENGTH_LONG).show()
+            return false
+        }
+        val ss = lop.siSo.toIntOrNull()
+        if (ss == null) {
+            Toast.makeText(this, "Sĩ số không phải số  ", Toast.LENGTH_LONG).show()
+            return false
+        }
+        return true
     }
 
 }
 
 
 
-data class Lop(val maLop: String, val tenLop: String, val siSo: Int)
+data class Lop(val maLop: String, val tenLop: String, val siSo: String)
 
 @Preview
 @Composable
@@ -142,18 +180,18 @@ fun MainScreen(onCreate: (Lop) -> Unit, onUpdate: (Lop) -> Unit, onDelete: (Lop)
             Spacer(modifier = Modifier.height(16.dp))
             Row (modifier = Modifier.fillMaxWidth()) {
                 Button(onClick = {
-                                 onCreate(Lop(malop, tenlop, siSo = siso.toInt()))
+                                 onCreate(Lop(malop, tenlop, siso))
                 }, modifier = Modifier.weight(1f)) {
                     Text(text = "INSERT")
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                Button(onClick = { onDelete(Lop(malop, tenlop, siSo = siso.toInt())) }, modifier = Modifier.weight(1f)) {
+                Button(onClick = { onDelete(Lop(malop, tenlop, siSo = siso)) }, modifier = Modifier.weight(1f)) {
                     Text(text = "DELETE")
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
             Row {
-                Button(onClick = { onUpdate(Lop(malop, tenlop, siSo = siso.toInt())) }, modifier = Modifier.weight(1f)) {
+                Button(onClick = { onUpdate(Lop(malop, tenlop, siSo = siso)) }, modifier = Modifier.weight(1f)) {
                     Text(text = "UPDATE")
                 }
                 Spacer(modifier = Modifier.width(8.dp))
