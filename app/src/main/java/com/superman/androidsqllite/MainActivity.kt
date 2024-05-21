@@ -1,6 +1,8 @@
 package com.superman.androidsqllite
 
 import android.content.ContentValues
+import android.content.Intent
+import android.database.Cursor
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -46,9 +48,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        var malop = ""
-        var tenlop = ""
-        var siso = 0
 
 
 
@@ -59,47 +58,68 @@ class MainActivity : ComponentActivity() {
             ) {
                 MainScreen(onCreate = {
                     if (Validate(it)) {
-                        val dbContext = DatabaseInstance.writableDatabase
-                        dbContext.beginTransaction()
-                        val contentValues = ContentValues().apply {
-                            put(com.superman.androidsqllite.database.DatabaseInstance.MA_LOP, it.maLop)
-                            put(com.superman.androidsqllite.database.DatabaseInstance.TEN_LOP, tenlop)
-                            put(com.superman.androidsqllite.database.DatabaseInstance.SI_SO, it.siSo)
+                        if (FindById(it.maLop).maLop != "-1") {
+                            Toast.makeText(this, "Đã tồn tại giá trị ", Toast.LENGTH_LONG).show()
+
+                        } else {
+                            val dbContext = DatabaseInstance.writableDatabase
+                            dbContext.beginTransaction()
+                            val contentValues = ContentValues().apply {
+                                put(com.superman.androidsqllite.database.DatabaseInstance.MA_LOP, it.maLop)
+                                put(com.superman.androidsqllite.database.DatabaseInstance.TEN_LOP, it.tenLop)
+                                put(com.superman.androidsqllite.database.DatabaseInstance.SI_SO, it.siSo)
+                            }
+                            dbContext.insert(com.superman.androidsqllite.database.DatabaseInstance.TABLE_NAME, null, contentValues)
+                            dbContext.setTransactionSuccessful()
+                            Toast.makeText(this, "Thêm mới thành công", Toast.LENGTH_LONG).show()
+                            dbContext.endTransaction()
                         }
-                        dbContext.insert(com.superman.androidsqllite.database.DatabaseInstance.TABLE_NAME, null, contentValues)
-                        dbContext.setTransactionSuccessful()
-                        Toast.makeText(this, "Thêm mới thành công", Toast.LENGTH_LONG).show()
-                        dbContext.endTransaction()
+
                     }
                 }, onUpdate = {
                     if (Validate(it)) {
-                        val dbContext = DatabaseInstance.writableDatabase
-                        dbContext.beginTransaction()
-                        val contentValues = ContentValues().apply {
-                            put(com.superman.androidsqllite.database.DatabaseInstance.TEN_LOP, tenlop)
-                            put(com.superman.androidsqllite.database.DatabaseInstance.SI_SO, it.siSo)
+                        if (FindById(it.maLop).maLop != "-1")
+                        {
+                            val dbContext = DatabaseInstance.writableDatabase
+                            dbContext.beginTransaction()
+                            val contentValues = ContentValues().apply {
+                                put(com.superman.androidsqllite.database.DatabaseInstance.TEN_LOP, it.tenLop)
+                                put(com.superman.androidsqllite.database.DatabaseInstance.SI_SO, it.siSo)
+                            }
+                            dbContext.update(com.superman.androidsqllite.database.DatabaseInstance.TABLE_NAME, contentValues, "${com.superman.androidsqllite.database.DatabaseInstance.MA_LOP} = ?", arrayOf(it.maLop.toString()))
+                            dbContext.setTransactionSuccessful()
+                            Toast.makeText(this, "Cập nhật thành công", Toast.LENGTH_LONG).show()
+                            dbContext.endTransaction()
+                        } else {
+                            Toast.makeText(this, "Không tồn tại ", Toast.LENGTH_LONG).show()
                         }
-                        dbContext.update(com.superman.androidsqllite.database.DatabaseInstance.TABLE_NAME, contentValues, "${com.superman.androidsqllite.database.DatabaseInstance.MA_LOP} = ?", arrayOf(it.maLop.toString()))
-                        dbContext.setTransactionSuccessful()
-                        Toast.makeText(this, "Cập nhật thành công", Toast.LENGTH_LONG).show()
-                        dbContext.endTransaction()
+
                     }
 
                 }, onDelete = {
 
                     if (Validate(it)) {
-                        val dbContext = DatabaseInstance.writableDatabase
-                        dbContext.beginTransaction()
-                        val contentValues = ContentValues().apply {
-                            put(com.superman.androidsqllite.database.DatabaseInstance.TEN_LOP, tenlop)
-                            put(com.superman.androidsqllite.database.DatabaseInstance.SI_SO, it.siSo)
+                        if (FindById(it.maLop).maLop != "-1") {
+                            val dbContext = DatabaseInstance.writableDatabase
+                            dbContext.beginTransaction()
+                            val contentValues = ContentValues().apply {
+                                put(com.superman.androidsqllite.database.DatabaseInstance.TEN_LOP, it.tenLop)
+                                put(com.superman.androidsqllite.database.DatabaseInstance.SI_SO, it.siSo)
+                            }
+                            dbContext.delete(com.superman.androidsqllite.database.DatabaseInstance.TABLE_NAME, "${com.superman.androidsqllite.database.DatabaseInstance.MA_LOP} = ?", arrayOf(it.maLop.toString()))
+                            dbContext.setTransactionSuccessful()
+                            Toast.makeText(this, "Xóa thành công", Toast.LENGTH_LONG).show()
+                            dbContext.endTransaction()
+                        } else {
+                            Toast.makeText(this, "Không tồn tại", Toast.LENGTH_LONG).show()
+
                         }
-                        dbContext.update(com.superman.androidsqllite.database.DatabaseInstance.TABLE_NAME, contentValues, "${com.superman.androidsqllite.database.DatabaseInstance.MA_LOP} = ?", arrayOf(it.maLop.toString()))
-                        dbContext.setTransactionSuccessful()
-                        Toast.makeText(this, "Cập nhật thành công", Toast.LENGTH_LONG).show()
-                        dbContext.endTransaction()
+
                     }
-                }, onQuery = {})
+                }, onQuery = {
+                    val intent = Intent(this, ListActivity::class.java)
+                    startActivity(intent)
+                })
 
             }
         }
@@ -116,12 +136,30 @@ class MainActivity : ComponentActivity() {
         }
         return true
     }
+    fun FindById(id: String): Lop {
+        val db = DatabaseInstance.readableDatabase
+        val cursor: Cursor = db.query(
+            com.superman.androidsqllite.database.DatabaseInstance.TABLE_NAME,
+            arrayOf(com.superman.androidsqllite.database.DatabaseInstance.MA_LOP, com.superman.androidsqllite.database.DatabaseInstance.TEN_LOP, com.superman.androidsqllite.database.DatabaseInstance.SI_SO),
+            "${com.superman.androidsqllite.database.DatabaseInstance.MA_LOP} = ?",
+            arrayOf(id.toString()),
+            null,
+            null,
+            null
+        )
+        if (cursor.moveToFirst()) {
+                val tenlop = cursor.getString(cursor.getColumnIndexOrThrow(com.superman.androidsqllite.database.DatabaseInstance.TEN_LOP))
+                val siso = cursor.getInt(cursor.getColumnIndexOrThrow(com.superman.androidsqllite.database.DatabaseInstance.SI_SO))
+            return Lop(id, tenlop, siso.toString())
+        }
+        return Lop("-1", "", "")
+    }
 
 }
 
 
 
-data class Lop(val maLop: String, val tenLop: String, val siSo: String)
+data class Lop(var maLop: String, var tenLop: String, var siSo: String)
 
 @Preview
 @Composable
